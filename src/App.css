@@ -1,0 +1,65 @@
+.app {
+  background: #0f172a;
+  color: white;
+  height: 100vh;
+  padding: 20px;
+}
+
+.status {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.status.ok {
+  color: #22c55e;
+}
+
+.status.warn {
+  color: #ef4444;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.controls button {
+  padding: 8px 12px;
+  background: #1e293b;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.cam {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 220px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: move;
+  box-shadow: 0 0 20px rgba(0,0,0,.6);
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  background: #020617;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+.modal-box h2 {
+  margin-bottom: 10px;
+}
