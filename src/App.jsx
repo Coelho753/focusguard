@@ -3,7 +3,7 @@ import * as faceapi from "face-api.js";
 
 const SOUNDS = {
   alarm: "/alarm.ogg",
-  troll: "/troll.ogg",
+  troll: "/troll.mp3",
 };
 
 export default function App() {
@@ -19,11 +19,10 @@ export default function App() {
   const lastSeenRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // 🔊 Inicializa áudio (unlock)
+  // 🔓 Unlock áudio
   const initAudio = () => {
     const audio = new Audio(SOUNDS[soundType]);
     audio.loop = true;
-    audio.volume = 1;
     audioRef.current = audio;
     setAudioEnabled(true);
   };
@@ -56,28 +55,37 @@ export default function App() {
         audioRef.current.paused &&
         !paused
       ) {
-        audioRef.current.play().catch(() => {});
+        audioRef.current.play().catch(() => { });
       }
     }
   }, [paused, audioEnabled]);
 
-  // 📷 Init câmera + modelos
+  // 📷 Init câmera
   useEffect(() => {
     async function init() {
-      await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
+      try {
+        await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      lastSeenRef.current = Date.now();
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
 
-      intervalRef.current = setInterval(detectFace, 1200);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+
+        intervalRef.current = setInterval(detectFace, 1200);
+      } catch (err) {
+        alert("Permita o acesso à câmera para usar o FocusGuard.");
+        console.error(err);
+      }
     }
 
     init();
     return () => clearInterval(intervalRef.current);
   }, [detectFace]);
 
-  // ⏸ Pause real
+  // ⏸ Pausa real
   useEffect(() => {
     if (paused && audioRef.current) {
       audioRef.current.pause();
@@ -85,7 +93,7 @@ export default function App() {
     }
   }, [paused]);
 
-  // 🔁 Troca de áudio
+  // 🔁 Troca de som
   useEffect(() => {
     localStorage.setItem("soundType", soundType);
 
@@ -97,157 +105,156 @@ export default function App() {
   }, [soundType]);
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <h1 style={styles.title}>🎯 FocusGuard</h1>
+    <div style={styles.app}>
+      {/* VIDEO */}
+      <div style={styles.videoArea}>
+        <video
+          ref={videoRef}
+          autoPlay
+          muted
+          playsInline
+          style={styles.video}
+        />
 
-        <div style={styles.content}>
-          {/* VIDEO */}
-          <div style={styles.videoBox}>
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              style={styles.video}
-            />
-
-            <div
-              style={{
-                ...styles.status,
-                background: present ? "#0f5132" : "#842029",
-              }}
-            >
-              {present ? "🟢 Presente" : "🔴 Ausente"}
-            </div>
-          </div>
-
-          {/* CONTROLES */}
-          <div style={styles.controls}>
-            <button
-              onClick={() => setPaused((p) => !p)}
-              style={{
-                ...styles.button,
-                background: paused ? "#198754" : "#ffc107",
-                color: "#000",
-              }}
-            >
-              {paused ? "▶ Retomar" : "⏸ Pausar"}
-            </button>
-
-            <select
-              value={soundType}
-              onChange={(e) => setSoundType(e.target.value)}
-              style={styles.select}
-            >
-              <option value="alarm">🔔 Alarme</option>
-              <option value="troll">🤡 Troll</option>
-            </select>
-
-            {!audioEnabled && (
-              <button onClick={initAudio} style={styles.buttonDanger}>
-                🔓 Ativar áudio
-              </button>
-            )}
-
-            <button
-              style={styles.buttonSecondary}
-              onClick={() => new Audio(SOUNDS[soundType]).play()}
-            >
-              ▶ Testar som
-            </button>
-          </div>
+        <div
+          style={{
+            ...styles.status,
+            background: present ? "#0f5132" : "#842029",
+          }}
+        >
+          {present ? "🟢 Presente" : "🔴 Ausente"}
         </div>
       </div>
+
+      {/* SIDEBAR */}
+      <aside style={styles.sidebar}>
+        <h1 style={styles.title}>🎯 FocusGuard</h1>
+
+        <button
+          style={{
+            ...styles.button,
+            background: paused ? "#198754" : "#ffc107",
+            color: "#000",
+          }}
+          onClick={() => setPaused((p) => !p)}
+        >
+          {paused ? "▶ Retomar" : "⏸ Pausar"}
+        </button>
+
+        <select
+          value={soundType}
+          onChange={(e) => setSoundType(e.target.value)}
+          style={styles.select}
+        >
+          <option value="alarm">Alarm</option>
+          <option value="troll">Troll</option>
+        </select>
+
+        {!audioEnabled && (
+          <button style={styles.buttonDanger} onClick={initAudio}>
+            🔓 Ativar áudio
+          </button>
+        )}
+
+        <button
+          style={styles.buttonSecondary}
+          onClick={() => new Audio(SOUNDS[soundType]).play()}
+        >
+          ▶ Testar som
+        </button>
+      </aside>
     </div>
   );
 }
 
-// =====================
-// STYLES RESPONSIVOS
-// =====================
+/* =====================
+   FULLSCREEN DESKTOP UI
+===================== */
+
 const styles = {
-  page: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #0f2027, #203a43, #2c5364)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 20,
+  app: {
+    width: "100vw",
+    height: "100vh",
+    display: "grid",
+    gridTemplateColumns: "2fr 360px",
+    background: "#0b0f14",
+    overflow: "hidden",
   },
-  card: {
-    background: "#111",
-    borderRadius: 20,
-    padding: 24,
+
+  videoArea: {
+    position: "relative",
     width: "100%",
-    maxWidth: 900,
-    boxShadow: "0 20px 40px rgba(0,0,0,.6)",
-  },
-  title: {
-    textAlign: "center",
-    marginBottom: 20,
-    color: "#fff",
-  },
-  content: {
+    height: "100%",
+    background: "#000",
     display: "flex",
-    gap: 24,
-    flexWrap: "wrap", // 🔑 mobile quebra automaticamente
+    alignItems: "center",
     justifyContent: "center",
   },
-  videoBox: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
+
+
   video: {
-    width: 280,
-    borderRadius: 14,
-    border: "2px solid #333",
-    marginBottom: 10,
+    width: "70%",
+    height: "auto",
+    maxHeight: "85vh",
+    objectFit: "contain",
+    transform: "scaleX(-1)",
   },
+
   status: {
-    padding: "6px 14px",
+    position: "absolute",
+    bottom: 24,
+    left: 24,
+    padding: "10px 20px",
     borderRadius: 20,
     color: "#fff",
     fontWeight: "bold",
   },
-  controls: {
-    minWidth: 260,
+
+  sidebar: {
+    background: "#111",
+    padding: 50,
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
+    gap: 16,
+    borderLeft: "4px solid #222",
   },
+
+  title: {
+    color: "#fff",
+    marginBottom: 20,
+  },
+
   button: {
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 14,
     border: "none",
     fontWeight: "bold",
     cursor: "pointer",
-    marginBottom: 12,
   },
+
   buttonDanger: {
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 14,
     background: "#dc3545",
     border: "none",
     color: "#fff",
     cursor: "pointer",
-    marginBottom: 12,
   },
+
   buttonSecondary: {
-    padding: 12,
-    borderRadius: 12,
+    padding: 14,
+    borderRadius: 14,
     background: "#0d6efd",
     border: "none",
     color: "#fff",
     cursor: "pointer",
   },
+
   select: {
-    padding: 10,
-    borderRadius: 12,
+    padding: 12,
+    borderRadius: 14,
     background: "#222",
     color: "#fff",
     border: "1px solid #333",
-    marginBottom: 12,
   },
 };
