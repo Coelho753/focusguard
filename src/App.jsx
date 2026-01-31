@@ -19,7 +19,9 @@ export default function App() {
   const lastSeenRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // 🔓 Unlock áudio
+  const isMobile = window.innerWidth <= 768;
+
+  /* 🔓 Ativar áudio */
   const initAudio = () => {
     const audio = new Audio(SOUNDS[soundType]);
     audio.loop = true;
@@ -27,7 +29,7 @@ export default function App() {
     setAudioEnabled(true);
   };
 
-  // 👁️ Detecção facial
+  /* 👁️ Detecção facial */
   const detectFace = useCallback(async () => {
     if (!videoRef.current || paused) return;
 
@@ -55,19 +57,19 @@ export default function App() {
         audioRef.current.paused &&
         !paused
       ) {
-        audioRef.current.play().catch(() => { });
+        audioRef.current.play().catch(() => {});
       }
     }
   }, [paused, audioEnabled]);
 
-  // 📷 Init câmera
+  /* 📷 Inicializar câmera */
   useEffect(() => {
     async function init() {
       try {
         await faceapi.nets.tinyFaceDetector.loadFromUri("/models");
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: { facingMode: "user" },
         });
 
         if (videoRef.current) {
@@ -85,7 +87,7 @@ export default function App() {
     return () => clearInterval(intervalRef.current);
   }, [detectFace]);
 
-  // ⏸ Pausa real
+  /* ⏸ Pausa */
   useEffect(() => {
     if (paused && audioRef.current) {
       audioRef.current.pause();
@@ -93,7 +95,7 @@ export default function App() {
     }
   }, [paused]);
 
-  // 🔁 Troca de som
+  /* 🔁 Troca de áudio */
   useEffect(() => {
     localStorage.setItem("soundType", soundType);
 
@@ -105,7 +107,7 @@ export default function App() {
   }, [soundType]);
 
   return (
-    <div style={styles.app}>
+    <div style={styles.app(isMobile)}>
       {/* VIDEO */}
       <div style={styles.videoArea}>
         <video
@@ -113,7 +115,7 @@ export default function App() {
           autoPlay
           muted
           playsInline
-          style={styles.video}
+          style={styles.video(isMobile)}
         />
 
         <div
@@ -126,8 +128,8 @@ export default function App() {
         </div>
       </div>
 
-      {/* SIDEBAR */}
-      <aside style={styles.sidebar}>
+      {/* CONTROLES */}
+      <aside style={styles.sidebar(isMobile)}>
         <h1 style={styles.title}>🎯 FocusGuard</h1>
 
         <button
@@ -168,60 +170,62 @@ export default function App() {
 }
 
 /* =====================
-   FULLSCREEN DESKTOP UI
+   STYLES
 ===================== */
 
 const styles = {
-  app: {
+  app: (isMobile) => ({
     width: "100vw",
     height: "100vh",
-    display: "grid",
-    gridTemplateColumns: "2fr 360px",
+    display: "flex",
+    flexDirection: isMobile ? "column" : "row",
     background: "#0b0f14",
     overflow: "hidden",
-  },
+  }),
 
   videoArea: {
+    flex: 1,
     position: "relative",
-    width: "100%",
-    height: "100%",
     background: "#000",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
 
-
-  video: {
-    width: "70%",
-    height: "auto",
-    maxHeight: "85vh",
-    objectFit: "contain",
+  video: (isMobile) => ({
+    width: isMobile ? "100%" : "85%",
+    height: isMobile ? "100%" : "auto",
+    maxHeight: isMobile ? "100%" : "90%",
+    objectFit: "cover",
     transform: "scaleX(-1)",
-  },
+  }),
 
   status: {
     position: "absolute",
-    bottom: 24,
-    left: 24,
-    padding: "10px 20px",
+    bottom: 20,
+    left: 20,
+    padding: "10px 18px",
     borderRadius: 20,
     color: "#fff",
     fontWeight: "bold",
+    fontSize: 14,
   },
 
-  sidebar: {
+  sidebar: (isMobile) => ({
+    width: isMobile ? "100%" : 360,
+    padding: 24,
     background: "#111",
-    padding: 50,
     display: "flex",
     flexDirection: "column",
-    gap: 16,
-    borderLeft: "4px solid #222",
-  },
+    gap: 14,
+    borderTop: isMobile ? "2px solid #222" : "none",
+    borderLeft: !isMobile ? "2px solid #222" : "none",
+  }),
 
   title: {
     color: "#fff",
-    marginBottom: 20,
+    textAlign: "center",
+    marginBottom: 10,
   },
 
   button: {
