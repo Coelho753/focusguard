@@ -148,7 +148,7 @@ export default function App() {
           onChange={(e) => setSoundType(e.target.value)}
           style={styles.select}
         >
-          <option value="alarm">Alarm 1</option>
+          <option value="alarm">Alarme 1</option>
           <option value="troll">Alarme 2</option>
         </select>
 
